@@ -1,3 +1,8 @@
+/*
+Covid 19 Data Exploration [Updated March 2022]
+Skills used: Joins, CTE's, Temp Tables, Windows Functions, Aggregate Functions, Converting Data Types, Creating Views
+*/
+
 select *
 from dbo.coviddeaths
 where continent is not null 
@@ -7,12 +12,14 @@ order by 3,4
 --from dbo.covidvaccinations
 --order by 3,4
 
+--Selecting relevant data that we will begin exploring
+
 Select location, date, total_cases, new_cases, new_deaths, population
 from dbo.coviddeaths
 order by 1,2
 
 --looking at total cases vs total deaths
---likelihood of dying if you contract covid (in the UK)
+--This shows likelihood of dying if you contract covid (in the UK)
 
 Select location, date, total_cases, new_deaths, (total_deaths/total_cases *100) as DeathPercentage
 from dbo.coviddeaths
@@ -20,7 +27,7 @@ where location = 'United Kingdom'
 order by 1,2
 
 --Looking at total cases vs population
---shows what percentage of population got covid
+--shows what percentage of population got covid (in the UK)
 Select location, date, total_cases, population, (total_cases/population *100) as covidcaughtpercentage
 from dbo.coviddeaths
 where location = 'United Kingdom'
@@ -36,6 +43,8 @@ order by PercentPopulationInfected desc
 
 
 --showing the countries with highest death count per population
+--converting total_death value to an integer datatype.
+--We could also use CONVERT(int,total_deaths)
 
 Select Location, Population, max(cast(total_deaths as int)) as totaldeathcount
 from dbo.coviddeaths
@@ -45,7 +54,8 @@ group by population, location
 order by totaldeathcount desc
 
 --grouping by continent
---showing the continents with the highest death counts
+--showing the continents with the highest death count per population
+
 Select location, max(cast(total_deaths as int)) as totaldeathcount
 from dbo.coviddeaths
 --where location = 'United Kingdom'
@@ -108,6 +118,7 @@ from popvsvac
 
 
 --using a temp table 
+-- by implementing DROP function, we can execute the function numerous times without errors when making amendments to the the table
 DROP table if exists #percentpopulationvaccinated
 create table #percentpopulationvaccinated
 (
@@ -142,3 +153,4 @@ join covidvaccinations va
 on de.location = va.location 
 and de.date = va.date
 where de.continent is not null
+
