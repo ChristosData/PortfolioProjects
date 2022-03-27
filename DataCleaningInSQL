@@ -4,27 +4,23 @@ Cleaning Data in SQL Queries
 
 
 Select *
-From PortfolioProject.dbo.NashvilleHousing
+From Projects.dbo.Housing
 
 --------------------------------------------------------------------------------------------------------------------------
 
--- Standardize Date Format
+-- Standardise Date Format
+--Original table has time as 00:00:00.000 on all rows for saleDate column, we want to remove this
 
+Select saleDate
+From Projects.dbo.Housing
 
-Select saleDateConverted, CONVERT(Date,SaleDate)
-From PortfolioProject.dbo.NashvilleHousing
+ALTER TABLE Housing
+ALTER COLUMN [SaleDate] date
 
+--Confirming the changes have been made to the table
 
-Update NashvilleHousing
-SET SaleDate = CONVERT(Date,SaleDate)
-
--- If it doesn't Update properly
-
-ALTER TABLE NashvilleHousing
-Add SaleDateConverted Date;
-
-Update NashvilleHousing
-SET SaleDateConverted = CONVERT(Date,SaleDate)
+select saledate
+from Projects.dbo.Housing
 
 
  --------------------------------------------------------------------------------------------------------------------------
@@ -32,15 +28,15 @@ SET SaleDateConverted = CONVERT(Date,SaleDate)
 -- Populate Property Address data
 
 Select *
-From PortfolioProject.dbo.NashvilleHousing
---Where PropertyAddress is null
+From Projects.dbo.Housing
+Where PropertyAddress is null
 order by ParcelID
 
 
-
+--Creating a self-join to compare values for exact matches
 Select a.ParcelID, a.PropertyAddress, b.ParcelID, b.PropertyAddress, ISNULL(a.PropertyAddress,b.PropertyAddress)
-From PortfolioProject.dbo.NashvilleHousing a
-JOIN PortfolioProject.dbo.NashvilleHousing b
+From Projects.dbo.Housing a
+JOIN Projects.dbo.Housing b
 	on a.ParcelID = b.ParcelID
 	AND a.[UniqueID ] <> b.[UniqueID ]
 Where a.PropertyAddress is null
@@ -48,13 +44,13 @@ Where a.PropertyAddress is null
 
 Update a
 SET PropertyAddress = ISNULL(a.PropertyAddress,b.PropertyAddress)
-From PortfolioProject.dbo.NashvilleHousing a
-JOIN PortfolioProject.dbo.NashvilleHousing b
+From Projects.dbo.Housing a
+JOIN Projects.dbo.Housing b
 	on a.ParcelID = b.ParcelID
 	AND a.[UniqueID ] <> b.[UniqueID ]
 Where a.PropertyAddress is null
 
-
+--Running the self-join query again to confirm the null values have been filled with their respective addresses
 
 
 --------------------------------------------------------------------------------------------------------------------------
@@ -63,77 +59,74 @@ Where a.PropertyAddress is null
 
 
 Select PropertyAddress
-From PortfolioProject.dbo.NashvilleHousing
+From Projects.dbo.Housing
 --Where PropertyAddress is null
 --order by ParcelID
 
+--separating the address by the delimiter ,
 SELECT
 SUBSTRING(PropertyAddress, 1, CHARINDEX(',', PropertyAddress) -1 ) as Address
 , SUBSTRING(PropertyAddress, CHARINDEX(',', PropertyAddress) + 1 , LEN(PropertyAddress)) as Address
 
-From PortfolioProject.dbo.NashvilleHousing
+From Projects.dbo.Housing
 
-
-ALTER TABLE NashvilleHousing
+--creating a new column to add the split address 
+ALTER TABLE Housing
 Add PropertySplitAddress Nvarchar(255);
 
-Update NashvilleHousing
+Update Housing
 SET PropertySplitAddress = SUBSTRING(PropertyAddress, 1, CHARINDEX(',', PropertyAddress) -1 )
 
-
-ALTER TABLE NashvilleHousing
+--creating a new column to add the split city
+ALTER TABLE Housing
 Add PropertySplitCity Nvarchar(255);
 
-Update NashvilleHousing
+Update Housing
 SET PropertySplitCity = SUBSTRING(PropertyAddress, CHARINDEX(',', PropertyAddress) + 1 , LEN(PropertyAddress))
 
 
-
-
 Select *
-From PortfolioProject.dbo.NashvilleHousing
-
-
-
+From Projects.dbo.Housing
 
 
 Select OwnerAddress
-From PortfolioProject.dbo.NashvilleHousing
+From Projects.dbo.Housing
 
-
+--using PARSENAME for limiters. Replace the comma with a period since PARSENAME only works with periods.
+--this splits the full address into street address, city and state.
 Select
 PARSENAME(REPLACE(OwnerAddress, ',', '.') , 3)
 ,PARSENAME(REPLACE(OwnerAddress, ',', '.') , 2)
 ,PARSENAME(REPLACE(OwnerAddress, ',', '.') , 1)
-From PortfolioProject.dbo.NashvilleHousing
+From Projects.dbo.Housing
 
 
 
-ALTER TABLE NashvilleHousing
+ALTER TABLE Housing
 Add OwnerSplitAddress Nvarchar(255);
 
-Update NashvilleHousing
+Update Housing
 SET OwnerSplitAddress = PARSENAME(REPLACE(OwnerAddress, ',', '.') , 3)
 
 
-ALTER TABLE NashvilleHousing
+ALTER TABLE Housing
 Add OwnerSplitCity Nvarchar(255);
 
-Update NashvilleHousing
+Update Housing
 SET OwnerSplitCity = PARSENAME(REPLACE(OwnerAddress, ',', '.') , 2)
 
 
 
-ALTER TABLE NashvilleHousing
+ALTER TABLE Housing
 Add OwnerSplitState Nvarchar(255);
 
-Update NashvilleHousing
+Update Housing
 SET OwnerSplitState = PARSENAME(REPLACE(OwnerAddress, ',', '.') , 1)
 
 
 
 Select *
-From PortfolioProject.dbo.NashvilleHousing
+From Projects.dbo.Housing
 
 
 
@@ -144,12 +137,10 @@ From PortfolioProject.dbo.NashvilleHousing
 -- Change Y and N to Yes and No in "Sold as Vacant" field
 
 
-Select Distinct(SoldAsVacant), Count(SoldAsVacant)
-From PortfolioProject.dbo.NashvilleHousing
+Select Distinct(SoldAsVacant), Count(SoldAsVacant) as CountResult
+From Projects.dbo.Housing
 Group by SoldAsVacant
 order by 2
-
-
 
 
 Select SoldAsVacant
@@ -157,18 +148,20 @@ Select SoldAsVacant
 	   When SoldAsVacant = 'N' THEN 'No'
 	   ELSE SoldAsVacant
 	   END
-From PortfolioProject.dbo.NashvilleHousing
+From Projects.dbo.Housing
 
 
-Update NashvilleHousing
+Update Housing
 SET SoldAsVacant = CASE When SoldAsVacant = 'Y' THEN 'Yes'
 	   When SoldAsVacant = 'N' THEN 'No'
 	   ELSE SoldAsVacant
 	   END
 
-
-
-
+--checking our results
+Select Distinct(SoldAsVacant), Count(SoldAsVacant) as CountResult
+From Projects.dbo.Housing
+Group by SoldAsVacant
+order by 2
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -187,19 +180,22 @@ Select *,
 					UniqueID
 					) row_num
 
-From PortfolioProject.dbo.NashvilleHousing
---order by ParcelID
+From Projects.dbo.Housing
+
 )
 Select *
+--DELETE
+--Use DELETE instead of Select * after confirming the duplicates to remove them from the database
 From RowNumCTE
 Where row_num > 1
-Order by PropertyAddress
+--Order by PropertyAddress
+
+--Running the above CTE query after deleting duplicates to confirm there are no more duplicates
 
 
 
 Select *
-From PortfolioProject.dbo.NashvilleHousing
-
+From Projects.dbo.Housing
 
 
 
@@ -210,72 +206,10 @@ From PortfolioProject.dbo.NashvilleHousing
 
 
 Select *
-From PortfolioProject.dbo.NashvilleHousing
+From Projects.dbo.Housing
 
 
-ALTER TABLE PortfolioProject.dbo.NashvilleHousing
+ALTER TABLE Projects.dbo.Housing
 DROP COLUMN OwnerAddress, TaxDistrict, PropertyAddress, SaleDate
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------
-
---- Importing Data using OPENROWSET and BULK INSERT	
-
---  More advanced and looks cooler, but have to configure server appropriately to do correctly
---  Wanted to provide this in case you wanted to try it
-
-
---sp_configure 'show advanced options', 1;
---RECONFIGURE;
---GO
---sp_configure 'Ad Hoc Distributed Queries', 1;
---RECONFIGURE;
---GO
-
-
---USE PortfolioProject 
-
---GO 
-
---EXEC master.dbo.sp_MSset_oledb_prop N'Microsoft.ACE.OLEDB.12.0', N'AllowInProcess', 1 
-
---GO 
-
---EXEC master.dbo.sp_MSset_oledb_prop N'Microsoft.ACE.OLEDB.12.0', N'DynamicParameters', 1 
-
---GO 
-
-
----- Using BULK INSERT
-
---USE PortfolioProject;
---GO
---BULK INSERT nashvilleHousing FROM 'C:\Temp\SQL Server Management Studio\Nashville Housing Data for Data Cleaning Project.csv'
---   WITH (
---      FIELDTERMINATOR = ',',
---      ROWTERMINATOR = '\n'
---);
---GO
-
-
----- Using OPENROWSET
---USE PortfolioProject;
---GO
---SELECT * INTO nashvilleHousing
---FROM OPENROWSET('Microsoft.ACE.OLEDB.12.0',
---    'Excel 12.0; Database=C:\Users\alexf\OneDrive\Documents\SQL Server Management Studio\Nashville Housing Data for Data Cleaning Project.csv', [Sheet1$]);
---GO
