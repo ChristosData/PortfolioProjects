@@ -1,5 +1,9 @@
 /*
-Cleaning Data using SQL Queries
+In this project we conduct data cleaning and data exploration of housing data.
+
+Skills used:
+
+JOINS, String Functions, Window Functions, (IS)NULL Functions, CASE Statements, CTE's, Aggregate Functions, Aliases, Rank, Count, Slicing Data using NTILE 
 
 */
 
@@ -212,5 +216,75 @@ From Projects.dbo.Housing
 
 ALTER TABLE Projects.dbo.Housing
 DROP COLUMN OwnerAddress, TaxDistrict, PropertyAddress, SaleDate
+
+---------------------------------------------------------------------------------------------------------
+/*
+--Begin Data Exploration
+
+*/
+
+
+--viewing all the data 
+select *
+from Projects.dbo.Housing
+
+--selecting relevant data that we will begin exploring
+--taking a total count of all the different land use 
+select landuse, count(landuse) as totalcount
+from Projects.dbo.Housing
+group by landuse
+order by totalcount  desc
+
+--looking at landuse where the count exceeds 100 to narrow results
+select landuse, count(landuse) as totalcount
+from Projects.dbo.Housing
+group by landuse
+having count(landuse)>100
+order by totalcount  desc
+
+---Listing top 5 land use using a CTE, with an average sale price of each land use, ordering by rank and displaying total count  
+with  Landcount as
+(
+select landuse, round(avg(saleprice),0) as averagesaleprice,
+rank()  over (order by count(landuse) desc) as rank,
+count(landuse) as totalcount
+from Projects.dbo.Housing
+group by landuse
+)
+
+
+select landuse, averagesaleprice, rank, totalcount
+from Landcount 
+where rank<=5 
+order by rank
+
+--calculating the average house price across the entire table
+
+select round(avg(saleprice),0) as avgsaleprice
+from Projects.dbo.housing
+
+
+--finding out the top 5% of house prices by sale price using NTILE window function in a CTE to split the saleprice into 20 slices total, 5% each
+With SalesPriceData as
+(
+select uniqueID,SaleDateConverted, SalePrice, OwnerName, Acreage, Bedrooms, FullBath,  OwnerSplitAddress, OwnerSplitCity, OwnerSplitState,
+NTILE(20) OVER (ORDER BY saleprice DESC) AS  'NTile'
+from Projects.dbo.Housing
+)
+
+select  *
+from SalesPriceData
+where NTILE  = 1
+
+--Average house price of the top 5% of houses by saleprice
+select round(avg(saleprice),0) as avgpricetop5percent
+from SalesPriceData
+where NTILE = 1
+
+--using the NTILE function we can now view the results for other slices, for example top 10% by changing the where statement to <=2. 
+--we can also alter the slice value into quarters by running NTILE(4) and viewing the data by top 25%, 50%, 75%, 100%
+
+
+
 
 
