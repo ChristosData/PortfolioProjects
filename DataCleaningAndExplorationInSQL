@@ -3,7 +3,7 @@ In this project we conduct data cleaning and data exploration of housing data.
 
 Skills used:
 
-JOINS, String Functions, Window Functions, (IS)NULL Functions, CASE Statements, CTE's, Aggregate Functions, Aliases, Rank, Count, Slicing Data using NTILE 
+JOINS, String Functions, Window Functions, ISNULL Functions, CASE Statements, CTE's, Aggregate Functions, Aliases, Rank, Count, Slicing Data using NTILE 
 
 */
 
