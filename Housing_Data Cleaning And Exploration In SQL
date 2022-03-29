@@ -219,7 +219,7 @@ DROP COLUMN OwnerAddress, TaxDistrict, PropertyAddress, SaleDate
 
 ---------------------------------------------------------------------------------------------------------
 /*
---Begin Data Exploration
+Begin Data Exploration now that we have cleaned the data.
 
 */
 
