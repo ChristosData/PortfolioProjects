@@ -1,5 +1,9 @@
 --data downloaded from https://rebrickable.com/downloads/
-
+*/
+We explore complex problems using JOINS, CTEs, and WINDOW functions.
+note: parts.csv was imported using SSIS due to an error importing as a regular flat file in SQL server management studio.  
+Process: Data Flow Task > Flat file source > OLE DB destination > Execute task
+/*
 --what is the total number of parts per theme?
 
 create view dbo.analytics_main as
